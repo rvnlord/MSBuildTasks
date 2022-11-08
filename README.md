@@ -4,7 +4,7 @@ This is a library containing custom MSBuild tasks that I use in the process of s
    
 ### Examples:
 
-CUstom tasks defined within can be used in the following manner:
+Custom tasks defined within can be used in the following manner:
 
 ```
 <Project Sdk="Microsoft.NET.Sdk.Razor">
