@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\CommonLib\CommonLib\CommonLib\CommonLib.csproj" />
+    <ProjectReference Include="..\..\..\CommonLib\CommonLib\CommonLib\CommonLib.csproj" />
     <ProjectReference Include="..\MSBuildTasks\MSBuildTasks.csproj" />
   </ItemGroup>
 

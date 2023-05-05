@@ -69,21 +69,24 @@ namespace MSBuildTasks.Source.Tasks
                     Console.WriteLine(message);
                 else
                     Log.LogMessage(MessageImportance.High, message);
+
                 var countFile = Directory.GetFiles(outDir, $"_myContent-Count-{sourceFiles.Length}", SearchOption.TopDirectoryOnly).SingleOrDefault();
-                if (!CheckFiles && countFile != null) // sourceFilesMatcher.GetResultsInFullPath(outDir).Count()
-                    continue;
-                foreach (var sourceFile in sourceFiles)
+                if (CheckFiles || countFile is null) // sourceFilesMatcher.GetResultsInFullPath(outDir).Count()
                 {
-                    var destFile = outDir.TrimEnd('\\') + '\\' + sourceFile.Split(new[] { ProjectDir }, StringSplitOptions.None).Last().TrimStart('\\');
-                    var fiSource = new FileInfo(sourceFile);
-                    var fiDest = new FileInfo(destFile);
-                    if (!File.Exists(destFile) || fiSource.LastWriteTimeUtc < fiDest.LastWriteTimeUtc || fiSource.Length != fiDest.Length)
+                    foreach (var sourceFile in sourceFiles)
                     {
-                        new FileInfo(destFile).Directory?.Create();
-                        File.Copy(sourceFile, destFile, true);
+                        var destFile = outDir.TrimEnd('\\') + '\\' + sourceFile.Split(new[] { ProjectDir }, StringSplitOptions.None).Last().TrimStart('\\');
+                        var fiSource = new FileInfo(sourceFile);
+                        var fiDest = new FileInfo(destFile);
+                        if (!File.Exists(destFile) || fiSource.LastWriteTimeUtc < fiDest.LastWriteTimeUtc || fiSource.Length != fiDest.Length)
+                        {
+                            new FileInfo(destFile).Directory?.Create();
+                            File.Copy(sourceFile, destFile, true);
+                        }
                     }
                 }
-                var oldCountFiles = Directory.GetFiles(outDir, $"_myContent-Count-{sourceFiles.Length}", SearchOption.TopDirectoryOnly);
+
+                var oldCountFiles = Directory.GetFiles(outDir, "_myContent-Count-*", SearchOption.TopDirectoryOnly);
                 foreach (var oldCountFile in oldCountFiles)
                     File.Delete(oldCountFile);
                 File.WriteAllBytes(outDir.TrimEnd('\\') + $@"\_myContent-Count-{sourceFiles.Length}", Array.Empty<byte>());
