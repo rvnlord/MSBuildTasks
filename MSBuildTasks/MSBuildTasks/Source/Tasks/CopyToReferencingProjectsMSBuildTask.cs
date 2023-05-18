@@ -6,6 +6,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace MSBuildTasks.Source.Tasks
 {
+    // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class CopyToReferencingProjectsMSBuildTask : Microsoft.Build.Utilities.Task
     {
         [Required] 
@@ -70,6 +71,8 @@ namespace MSBuildTasks.Source.Tasks
                 else
                     Log.LogMessage(MessageImportance.High, message);
 
+                if (!Directory.Exists(outDir))
+                    Directory.CreateDirectory(outDir);
                 var countFile = Directory.GetFiles(outDir, $"_myContent-Count-{sourceFiles.Length}", SearchOption.TopDirectoryOnly).SingleOrDefault();
                 if (CheckFiles || countFile is null) // sourceFilesMatcher.GetResultsInFullPath(outDir).Count()
                 {
