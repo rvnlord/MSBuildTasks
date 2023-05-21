@@ -46,20 +46,7 @@ namespace MSBuildTasks.Source.Tasks
             var outDirs = projDirs.Select(projDir => projDir + '\\' + OutDirPart.Trim('\\') + '\\' + "_myContent" + '\\' + Directory.CreateDirectory(ProjectDir).Name).Where(p => !p.StartsWith(ProjectDir)).ToArray();
             if (IncludePublish)
                 outDirs = outDirs.Concat(projDirs.Select(projDir => projDir + '\\' + @"bin\Publish" + '\\' + "_myContent" + '\\' + Directory.CreateDirectory(ProjectDir).Name).Where(p => !p.StartsWith(ProjectDir))).ToArray();
-            //foreach (var outDir in outDirs)
-            //{
-            //    var dirToRemove = Directory.GetParent(Directory.GetParent(outDir).FullName).FullName.TrimEnd('\\') + @"\Content";
-            //    if (Directory.Exists(dirToRemove))
-            //    {
-            //        var message = $"Deleting '{dirToRemove}'";
-            //        if (IsConsoleTest)
-            //            Console.WriteLine(message);
-            //        else
-            //            Log.LogMessage(MessageImportance.High, message);
-            //        Directory.Delete(dirToRemove, true);
-            //    }
-            //}
-            
+
             var sourceFilesMatcher = new Matcher();
             sourceFilesMatcher.AddIncludePatterns(SourceFilePatterns.Split(';'));
             var sourceFiles = sourceFilesMatcher.GetResultsInFullPath(ProjectDir).ToArray();

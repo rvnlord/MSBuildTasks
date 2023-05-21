@@ -16,11 +16,23 @@ using MSBuildTasks.Source.Tasks;
 
 var projectDir = FileUtils.GetProjectDir("CrimsonRelays.Frontend.React", "CrimsonRelays", true, new[] { ".esproj" });
 var solutionDir = FileUtils.GetSolutionDir("CrimsonRelays");
-new ImportReactLibraryMSBuildTask
+new ImportLibraryMSBuildTask
 {
     SolutionDir = solutionDir,
     ProjectDir = projectDir,
-    ReactLibraryName = "CommonLib.Web.TypeScript",
+    LibraryName = "CommonLib.Web.TypeScript",
+    From = "src/**",
+    To = "src/content",
+    IsConsoleTest = true
+}.Execute();
+
+new ImportLibraryMSBuildTask
+{
+    SolutionDir = solutionDir,
+    ProjectDir = projectDir,
+    LibraryName = "CommonLib.Web",
+    From = "wwwroot/**",
+    To = "src/content",
     IsConsoleTest = true
 }.Execute();
 
