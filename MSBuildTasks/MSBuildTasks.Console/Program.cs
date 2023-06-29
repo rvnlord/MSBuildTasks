@@ -23,6 +23,7 @@ new ImportLibraryMSBuildTask
     LibraryName = "CommonLib.Web.TypeScript",
     From = "src/**",
     To = "src/content",
+    SyncMode = "TwoWay",
     IsConsoleTest = true
 }.Execute();
 
@@ -33,6 +34,7 @@ new ImportLibraryMSBuildTask
     LibraryName = "CommonLib.Web",
     From = "wwwroot/**",
     To = "src/content",
+    SyncMode = "TwoWay",
     IsConsoleTest = true
 }.Execute();
 

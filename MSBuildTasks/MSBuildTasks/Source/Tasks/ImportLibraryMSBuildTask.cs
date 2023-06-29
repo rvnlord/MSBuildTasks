@@ -10,6 +10,8 @@ namespace MSBuildTasks.Source.Tasks
     // ReSharper disable once ClassWithVirtualMembersNeverInherited.Global
     public class ImportLibraryMSBuildTask : Microsoft.Build.Utilities.Task
     {
+        private SyncModeType _syncMode;
+
         [Required] 
         public virtual string SolutionDir { get; set; } = string.Empty;
 
@@ -22,16 +24,21 @@ namespace MSBuildTasks.Source.Tasks
         [Required] 
         public virtual string From { get; set; } = string.Empty;
         
+        [Required]
         public virtual string To { get; set; } = string.Empty;
+
+        [Required]
+        public virtual string SyncMode
+        {
+            get => Enum.GetName(_syncMode.GetType(), _syncMode);
+            set => _syncMode = Enum.GetValues(typeof(SyncModeType)).Cast<SyncModeType>().Single(v => Enum.GetName(v.GetType(), v)?.Equals(value, StringComparison.InvariantCultureIgnoreCase) == true);
+        }
 
         public virtual bool IsConsoleTest { get; set; }
 
         public override bool Execute()
         {
-            if (IsConsoleTest)
-                Console.WriteLine("Starting 'ImportLibraryMSBuildTask' MSBuildTask...");
-            else
-                Log.LogMessage(MessageImportance.High, "Starting 'ImportLibraryMSBuildTask' MSBuildTask...");
+            Print("Starting 'ImportLibraryMSBuildTask' MSBuildTask...");
 
             var slnPath = Directory.GetFiles(SolutionDir, "*.sln", SearchOption.TopDirectoryOnly).Single();
             var sln = File.ReadAllText(slnPath);
@@ -55,32 +62,28 @@ namespace MSBuildTasks.Source.Tasks
                 var targetFilePath = Path.GetFullPath(Path.Combine(ProjectDir, To, relativeTargetFilePath));
                 if (!File.Exists(targetFilePath) || File.GetLastWriteTimeUtc(sourceFilePath) > File.GetLastWriteTimeUtc(targetFilePath))
                 {
-                    var message = $"Copying '{relativeSourceFilePath}' --> '{relativeTargetFilePath}'";
-                    if (IsConsoleTest)
-                        Console.WriteLine(message);
-                    else
-                        Log.LogMessage(MessageImportance.High, message);
-
+                    Print($"Copying '{relativeSourceFilePath}' --> '{relativeTargetFilePath}'");
                     var targetDirPath = Path.GetDirectoryName(targetFilePath) ?? throw new NullReferenceException("Invalid directory path");
                     if (!Directory.Exists(targetDirPath))
                         Directory.CreateDirectory(targetDirPath);
 
                     new FileInfo(sourceFilePath).CopyTo(targetFilePath, true);
+                } 
+                else if (_syncMode == SyncModeType.TwoWay && File.Exists(targetFilePath) && File.GetLastWriteTimeUtc(sourceFilePath) < File.GetLastWriteTimeUtc(targetFilePath))
+                {
+                    Print($"Copying '{relativeSourceFilePath}' <-- '{relativeTargetFilePath}'");
+                    new FileInfo(targetFilePath).CopyTo(sourceFilePath, true);
                 }
             }
             
             var allRecursiveFilesInTargetDir = targetDir.GetFiles("*", SearchOption.AllDirectories);
-            foreach (var reecursiveTargetFile in allRecursiveFilesInTargetDir)
+            foreach (var recursiveTargetFile in allRecursiveFilesInTargetDir)
             {
-                var relativeTargetFilePath = reecursiveTargetFile.FullName.Split(new[] { $@"{targetDir.FullName}\" }, StringSplitOptions.None).Last();
+                var relativeTargetFilePath = recursiveTargetFile.FullName.Split(new[] { $@"{targetDir.FullName}\" }, StringSplitOptions.None).Last();
                 if (!new FileInfo($@"{libraryDir.FullName}\{sourcePatternCommonPrefix}\{relativeTargetFilePath}").Exists)
                 {
-                    var message = $"Removing '{relativeTargetFilePath}' file because it doesn't exist in source";
-                    if (IsConsoleTest)
-                        Console.WriteLine(message);
-                    else
-                        Log.LogMessage(MessageImportance.High, message);
-                    reecursiveTargetFile.Delete();
+                    Print($"Removing '{relativeTargetFilePath}' file because it doesn't exist in source");
+                    recursiveTargetFile.Delete();
                 }
             }
 
@@ -90,26 +93,23 @@ namespace MSBuildTasks.Source.Tasks
                 var relativeTargetDirPath = recursiveTargetDir.FullName.Split(new[] { $@"{targetDir.FullName}\" }, StringSplitOptions.None).Last();
                 if (!new DirectoryInfo($@"{libraryDir.FullName}\{sourcePatternCommonPrefix}\{relativeTargetDirPath}").Exists)
                 {
-                    var message = $"Removing '{relativeTargetDirPath}' directory because it doesn't exist in source";
-                    if (IsConsoleTest)
-                        Console.WriteLine(message);
-                    else
-                    {
-                        Log.LogMessage(MessageImportance.High, message);
-                        Log.LogMessage(MessageImportance.High, $"Library Dir: {libraryDir.FullName}");
-                        Log.LogMessage(MessageImportance.High, $@"Exact Source Path Checked: {libraryDir}\{relativeTargetDirPath}, Exists: {new DirectoryInfo($@"{libraryDir}\{relativeTargetDirPath}").Exists}");
-                    }
+                    Print($"Removing '{relativeTargetDirPath}' directory because it doesn't exist in source");
                     if (Directory.Exists(recursiveTargetDir.FullName))
                         recursiveTargetDir.Delete(true);
                 }
             }
 
-            if (IsConsoleTest)
-                Console.WriteLine("Finished 'ImportLibraryMSBuildTask' MSBuildTask.");
-            else
-                Log.LogMessage(MessageImportance.High, "Finished 'ImportLibraryMSBuildTask' MSBuildTask.");
+            Print("Finished 'ImportLibraryMSBuildTask' MSBuildTask.");
 
             return true;
+        }
+
+        private void Print(string message)
+        {
+            if (IsConsoleTest)
+                Console.WriteLine(message);
+            else
+                Log.LogMessage(MessageImportance.High, message);
         }
 
         private static string GetCommonPrefix(string[] paths)
@@ -130,6 +130,12 @@ namespace MSBuildTasks.Source.Tasks
             if (prefix.EndsWith("/") || prefix.EndsWith("\\"))
                 prefix = prefix.Substring(0, prefix.Length - 1);
             return prefix;
+        }
+
+        private enum SyncModeType
+        {
+            OneWay,
+            TwoWay
         }
     }
 }
